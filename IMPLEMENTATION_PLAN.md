@@ -46,7 +46,7 @@ Tick each box (`- [x]`) when the task is done **and** its check passes. Don't st
 ### ✅ Exit criteria
 - [x] `pnpm install && pnpm build && pnpm lint && pnpm typecheck && pnpm test` all pass from a clean clone
 - [x] Unit tests for `normalizeSelection` and `extractSentence` (Spanish punctuation `¿ ¡`, abbreviations, line breaks)
-- [ ] First commit pushed to GitHub
+- [x] First commit pushed to GitHub
 
 ---
 
