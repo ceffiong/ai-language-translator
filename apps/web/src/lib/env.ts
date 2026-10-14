@@ -11,7 +11,9 @@ const EnvSchema = z.object({
   EMAIL_FROM: z.string().min(3),
   DEEPL_API_KEY: z.string().min(1),
   DEEPL_API_URL: z.url().default('https://api-free.deepl.com'),
-  ANTHROPIC_API_KEY: z.string().min(1),
+  GEMINI_API_KEY: z.string().min(1),
+  /** Override to try another model without a code change. */
+  GEMINI_MODEL: z.string().min(1).default('gemini-flash-lite-latest'),
   EXTENSION_IDS: z
     .string()
     .default('')

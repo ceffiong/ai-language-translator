@@ -1,10 +1,9 @@
-import { APIError } from '@anthropic-ai/sdk';
 import { ExplainRequestSchema, type ExplainStreamEvent } from '@ai-translator/shared';
 import { apiError, parseJson } from '@/lib/api';
 import { explainCacheKey, getCached, putCached } from '@/lib/cache';
-import { generateExplanation } from '@/lib/claude';
 import { collections } from '@/lib/collections';
 import { preflight, withCors } from '@/lib/cors';
+import { errorStatus, generateExplanation, isRetryable } from '@/lib/gemini';
 import { consume, identifyClient, remaining } from '@/lib/rate-limit';
 
 export const OPTIONS = preflight;
@@ -50,6 +49,7 @@ export const POST = withCors(async (request) => {
         }
       };
 
+      let lastStatus: number | undefined;
       for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
         if (attempt > 1) send({ type: 'reset' });
         try {
@@ -68,21 +68,20 @@ export const POST = withCors(async (request) => {
           }
           console.warn(JSON.stringify({ event: 'explain_invalid_output', attempt }));
         } catch (err) {
+          lastStatus = errorStatus(err);
           if (request.signal.aborted) {
             controller.close();
             return;
           }
-          const status = err instanceof APIError ? err.status : undefined;
           console.warn(
             JSON.stringify({
               event: 'explain_error',
               attempt,
-              status,
+              status: lastStatus,
               message: err instanceof Error ? err.message.slice(0, 300) : String(err),
             }),
           );
-          // Bad requests, auth and billing errors won't fix themselves on a retry.
-          if (status && status >= 400 && status < 500 && status !== 408 && status !== 429) break;
+          if (!isRetryable(err)) break;
         }
       }
 
@@ -90,10 +89,16 @@ export const POST = withCors(async (request) => {
       await refund().catch((err) => console.error('explain refund failed', err));
       send({
         type: 'error',
-        error: {
-          code: 'upstream_error',
-          message: "Couldn't explain this right now. Please try again.",
-        },
+        error:
+          lastStatus === 429
+            ? {
+                code: 'rate_limited',
+                message: 'Explanations are busy right now. Please try again in a minute.',
+              }
+            : {
+                code: 'upstream_error',
+                message: "Couldn't explain this right now. Please try again.",
+              },
       });
       controller.close();
     },

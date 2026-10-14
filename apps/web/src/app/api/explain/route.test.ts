@@ -38,7 +38,8 @@ vi.mock('@/lib/session', () => ({ getUser: async () => null }));
 vi.mock('@/lib/collections', () => ({
   collections: { usage: () => usage, explainCache: () => explainCache },
 }));
-vi.mock('@/lib/claude', () => ({
+vi.mock('@/lib/gemini', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/gemini')>()),
   generateExplanation: (_req: unknown, onText: (t: string) => void) => {
     const attempt = attempts[calls++] ?? good;
     return attempt(onText);
@@ -46,7 +47,7 @@ vi.mock('@/lib/claude', () => ({
 }));
 
 const { POST } = await import('./route');
-const { APIError } = await import('@anthropic-ai/sdk');
+const { ApiError } = await import('@google/genai');
 
 const INSTALL_ID = '0b5c3a1e-4f6d-4c2b-9a8e-7d6f5e4c3b2a';
 const body = {
@@ -95,7 +96,7 @@ describe('POST /api/explain', () => {
     ]);
   });
 
-  it('serves the second identical request from the cache without calling Claude or counting it', async () => {
+  it('serves the second identical request from the cache without calling the model or counting it', async () => {
     await (await POST(post())).text();
     const res = await POST(post());
     expect(await events(res)).toEqual([{ type: 'done', explanation: EXPLANATION, cached: true }]);
@@ -125,20 +126,41 @@ describe('POST /api/explain', () => {
     expect(explainCache.docs).toHaveLength(0);
   });
 
-  it('does not retry errors a retry cannot fix (e.g. billing)', async () => {
-    const billing: Attempt = async () => {
-      throw new APIError(400, undefined, 'credit balance too low', new Headers());
+  it('does not retry errors a retry cannot fix (e.g. a bad API key)', async () => {
+    const badKey: Attempt = async () => {
+      throw new ApiError({ status: 403, message: 'API key not valid' });
     };
-    attempts = [billing, good];
+    attempts = [badKey, good];
     const all = await events(await POST(post()));
     expect(all.map((e) => e.type)).toEqual(['error']);
     expect(calls).toBe(1);
     expect(anonCount()).toBe(0);
   });
 
+  it('says the service is busy when the model is rate limited, without retrying', async () => {
+    attempts = [
+      async () => {
+        throw new ApiError({ status: 429, message: 'Resource exhausted' });
+      },
+      good,
+    ];
+    const all = await events(await POST(post()));
+    expect(all).toEqual([
+      {
+        type: 'error',
+        error: {
+          code: 'rate_limited',
+          message: 'Explanations are busy right now. Please try again in a minute.',
+        },
+      },
+    ]);
+    expect(calls).toBe(1);
+    expect(anonCount()).toBe(0);
+  });
+
   it('retries a server error', async () => {
     const overloaded: Attempt = async () => {
-      throw new APIError(529, undefined, 'overloaded', new Headers());
+      throw new ApiError({ status: 503, message: 'overloaded' });
     };
     attempts = [overloaded, good];
     expect((await events(await POST(post()))).at(-1)?.type).toBe('done');

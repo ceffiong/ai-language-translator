@@ -65,7 +65,7 @@ export const ExampleSchema = z.object({
   translation: z.string().min(1),
 });
 
-/** What Claude returns for a selection. Written in the learner's native language. */
+/** What the model returns for a selection. Written in the learner's native language. */
 export const ExplanationSchema = z.object({
   meaningInContext: z.string().min(1),
   nuance: z.string().min(1),
@@ -80,7 +80,7 @@ export type Explanation = z.infer<typeof ExplanationSchema>;
 
 /**
  * `/api/explain` streams newline-delimited JSON, one event per line:
- * `delta` events carry raw JSON text as Claude writes it (for progressive display),
+ * `delta` events carry raw JSON text as the model writes it (for progressive display),
  * `reset` means a retry started and earlier deltas should be discarded,
  * and the stream always ends with exactly one `done` or `error` event.
  */

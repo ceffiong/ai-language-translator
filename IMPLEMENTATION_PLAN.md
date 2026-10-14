@@ -12,7 +12,8 @@ Tick each box (`- [x]`) when the task is done **and** its check passes. Don't st
 
 ### 0.1 Accounts and keys 🧑
 - [x] DeepL API account and key (record the plan used and its character allowance)
-- [x] Anthropic API key (set a monthly spend limit in the console)
+- [x] ~~Anthropic API key~~ (replaced by Gemini on 2026-10-14)
+- [ ] Gemini API key from aistudio.google.com (free tier)
 - [x] MongoDB Atlas: free M0 cluster, database user, network access, connection string
 - [ ] Vercel account (Hobby) linked to GitHub
 - [x] GitHub repository created (private)
@@ -31,7 +32,7 @@ Tick each box (`- [x]`) when the task is done **and** its check passes. Don't st
 - [x] Vitest config (per-package `vitest run`, orchestrated by Turborepo)
 - [x] `.env.example` at `apps/web/.env.example` listing every variable (no values):
       `MONGODB_URI`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`,
-      `RESEND_API_KEY`, `EMAIL_FROM`, `DEEPL_API_KEY`, `DEEPL_API_URL`, `ANTHROPIC_API_KEY`,
+      `RESEND_API_KEY`, `EMAIL_FROM`, `DEEPL_API_KEY`, `DEEPL_API_URL`, `GEMINI_API_KEY`, `GEMINI_MODEL`,
       `NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST`, `EXTENSION_IDS` (comma-separated), `ANON_DAILY_LIMIT=30`
 - [x] `apps/extension/.env.example`: `WXT_API_BASE_URL`, `WXT_POSTHOG_KEY`, `WXT_POSTHOG_HOST`
 - [x] 🧑 Copy both to `.env.local` / `.env` and fill in values
@@ -103,14 +104,14 @@ Tick each box (`- [x]`) when the task is done **and** its check passes. Don't st
 - [x] Log character count per request (for the cost check)
 - [x] ✅ Unit test with DeepL mocked; manual curl test against the real API (`es → en` and `en → es`). Found: DeepL labels short Spanish like "me da igual" as Portuguese, so `resolveDirection` treats an unsupported detected language as the learning language
 
-### 2.2 Explain (Claude) 🤖
-- [x] Before writing this, read the `claude-api` skill for current SDK usage, streaming and structured output (the skill wasn't available in this session, so I read the installed SDK's (`@anthropic-ai/sdk` 0.134) type definitions instead)
+### 2.2 Explain (Gemini; first built on Claude) 🤖
+- [x] Check the SDK's current API for streaming and structured output before writing this (read the installed `@google/genai` 2.29 type definitions)
 - [x] `packages/shared/src/prompt.ts`:
   - [x] System prompt: a language tutor that explains in the learner's **native** language, accurately and concisely, without making up etymology
   - [x] Input: selection, sentence, source and target languages, learner's native language
   - [x] Output JSON schema (`Explanation`): `meaningInContext`, `nuance` (why this word here, near-synonyms and how they differ), `register` (formal, neutral, informal, slang), `grammarNote?`, `examples[2]` `{source, translation}`, `ipa`, `partOfSpeech?`, `lemma?`
-- [x] `lib/claude.ts`: Anthropic SDK client, model `claude-haiku-5-5`, max tokens capped (1024), structured output via `output_config.format`, `effort: low`. Temperature can't be set on current models (the API rejects anything but 1.0)
-- [x] `POST /api/explain`: streams newline-delimited JSON events (`delta` / `reset` / `done` / `error`, see `ExplainStreamEventSchema`); validates the final JSON with zod; on failure retries once (not for 4xx errors like billing), then returns a friendly error and refunds the quota
+- [x] `lib/gemini.ts`: `@google/genai` client, model from `GEMINI_MODEL` (default `gemini-flash-lite-latest`), max output tokens capped (1024), structured output via `responseJsonSchema` (generated from the zod schema), minimal thinking. Replaced `lib/claude.ts` (Claude Haiku) on 2026-10-14
+- [x] `POST /api/explain`: streams newline-delimited JSON events (`delta` / `reset` / `done` / `error`, see `ExplainStreamEventSchema`); validates the final JSON with zod; on failure retries once (not for 4xx errors such as a bad key or a 429; a 429 tells the user explanations are busy), then returns a friendly error and refunds the quota
 - [x] Log input and output tokens per request
 - [ ] ✅ Unit tests: prompt builder snapshots; parser accepts recorded good responses and rejects malformed ones
 - [ ] ✅ Manual check: 10 sample phrases (ser/estar, por/para, subjunctive, idioms like "echar de menos", and English phrasal verbs for the `en→es` direction); read the output for quality
@@ -326,7 +327,7 @@ Tick each box (`- [x]`) when the task is done **and** its check passes. Don't st
 ---
 
 ## Running cost log
-| Date | Active users | DeepL chars | Claude tokens (in/out) | Est. cost | Notes |
+| Date | Active users | DeepL chars | LLM tokens (in/out) | Est. cost | Notes |
 |---|---|---|---|---|---|
 | | | | | | |
 
@@ -340,3 +341,4 @@ Tick each box (`- [x]`) when the task is done **and** its check passes. Don't st
 | 2026-10-14 | Working name "Contexto" kept for validation | Conflicts with a word game and with an existing "LingoMate" app; choose the final name before a public launch |
 | 2026-10-14 | `/api/explain` streams NDJSON events, not raw text | Lets the client show partial output, discard it on a retry (`reset`) and get a validated final object |
 | 2026-10-14 | Store only a keyed hash of IPs for the per-IP limit | Abuse protection without keeping personal data |
+| 2026-10-14 | Gemini (free tier) instead of Claude for explanations | Free during validation. Trade-off: on the free tier Google may use prompts to improve its products and reviewers may read them; disclosed on /privacy. Turning on Cloud Billing makes all use paid, which stops that |

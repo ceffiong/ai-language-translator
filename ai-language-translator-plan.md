@@ -19,7 +19,7 @@ Market research (2026-10-13/14) found strong demand (about a $24B market, Duolin
 **In:**
 1. Select text on any page → a small floating button → popover showing:
    - DeepL translation, with the source language auto-detected
-   - Claude explanation: meaning in this sentence, nuance and why this word, register, 2 example sentences, IPA
+   - AI explanation (Gemini): meaning in this sentence, nuance and why this word, register, 2 example sentences, IPA
    - pronunciation through the browser's text-to-speech
 2. **Save** → the card stores the word or phrase, the translation, the explanation, **the original sentence and the page URL**.
 3. Web app: spaced-repetition review (FSRS algorithm) that works on a phone, plus a daily streak.
@@ -37,7 +37,7 @@ Market research (2026-10-13/14) found strong demand (about a $24B market, Duolin
 | Database | **MongoDB Atlas** (free M0 tier) through the official driver | User's preference; the document model fits cards well |
 | Auth | **Better Auth** with its MongoDB adapter, plus Google sign-in and email magic link, plus its bearer plugin for the extension | Self-hosted, no per-user fees |
 | Translation | DeepL API (detects the source language) | Best quality for Spanish ↔ English |
-| Explanations | Claude API, `claude-haiku-5-5`, structured JSON output, streamed | Fast and cheap. Consult the `claude-api` skill when implementing |
+| Explanations | Gemini API (`gemini-flash-lite-latest` by default, set by `GEMINI_MODEL`), structured JSON output, streamed | Generous free tier for validation. Switched from Claude on 2026-10-14 |
 | Spaced repetition | `ts-fsrs` | Modern, open-source scheduling algorithm |
 | Analytics | PostHog (free tier) | Measures retention and the success criteria |
 | Validation | zod | Shared request and response schemas |
@@ -49,7 +49,7 @@ apps/extension/   WXT: entrypoints/content (selection button + popover in shadow
 apps/web/         Next.js: / (landing + waitlist), /review, /cards, /pro (fake door),
                   /extension/connect (passes the session to the extension),
                   api/translate, api/explain, api/cards, api/reviews
-packages/shared/  zod schemas, types, Claude prompt + output schema, API client
+packages/shared/  zod schemas, types, explanation prompt + output schema, API client
 ```
 
 ## Key design details
@@ -63,7 +63,7 @@ packages/shared/  zod schemas, types, Claude prompt + output schema, API client
 
 ## Build order
 1. Set up the monorepo and shared package. Next.js with the Mongo connection and Better Auth. Landing page with a waitlist.
-2. `/api/translate` (DeepL) and `/api/explain` (streamed Claude output), with zod validation, caching and rate limits.
+2. `/api/translate` (DeepL) and `/api/explain` (streamed Gemini output), with zod validation, caching and rate limits.
 3. WXT extension: selection button, popover with translation, explanation and text-to-speech, save button, connecting to an account.
 4. Cards and FSRS: `/api/cards`, `/api/reviews`, `/review` page that works on a phone, streak.
 5. PostHog events, `/pro` fake door, privacy page.
@@ -75,8 +75,8 @@ packages/shared/  zod schemas, types, Claude prompt + output schema, API client
 - **Go/no-go after 3–4 weeks:** at least 25% of active users still reviewing on day 7, at least 10 people clicking the upgrade button or joining the Pro waitlist, and unprompted praise for the explanations. Miss these → stop or rethink.
 
 ## Verification
-- **Unit tests (Vitest):** FSRS scheduling wrapper, zod schemas, rate limiter, cache keys, prompt output parsing using recorded Claude responses.
-- **API tests:** route handlers with DeepL and Claude mocked. One live smoke test, run behind an environment flag.
+- **Unit tests (Vitest):** FSRS scheduling wrapper, zod schemas, rate limiter, cache keys, prompt output parsing using recorded model responses.
+- **API tests:** route handlers with DeepL and Gemini mocked. One live smoke test, run behind an environment flag.
 - **Extension end-to-end (Playwright with Chromium):** load the unpacked build, open a local Spanish test page, select text, check the popover renders, save, then check the card shows up in `/review`.
 - **Manual check with Claude in Chrome:** select text on elpais.com and bbc.com, confirm the popover and text-to-speech work. Go through a full review session on a phone-sized viewport.
 - **Cost check:** log tokens and DeepL characters per request, and confirm the cost per active user fits the budget.
@@ -88,7 +88,7 @@ packages/shared/  zod schemas, types, Claude prompt + output schema, API client
 No code until both files exist and the user says to start Phase 0.
 
 ## Needed from the user before building
-API keys for DeepL and Anthropic, a MongoDB Atlas account, a Vercel account, a PostHog project, Google OAuth credentials, and a Chrome Web Store developer account ($5 one-time fee). Claude will tell you when each is needed and will never enter them itself.
+API keys for DeepL and Gemini, a MongoDB Atlas account, a Vercel account, a PostHog project, Google OAuth credentials, and a Chrome Web Store developer account ($5 one-time fee). Claude will tell you when each is needed and will never enter them itself.
 
 ## Hosting decision
 **Vercel**: free Hobby plan during private validation (Hobby is non-commercial only), then Pro ($20/mo) once charging. Netlify costs about the same, but its credit-based billing is harder to predict. Render's free tier sleeps when idle (30s+ cold starts), which is too slow for a popover. Hosting will stay a small cost; DeepL and Claude usage are the real costs, so caching matters.
@@ -102,7 +102,7 @@ API keys for DeepL and Anthropic, a MongoDB Atlas account, a Vercel account, a P
 - Direct competitors: Rememberry (about 100K Chrome users), Toucan (raised a $4.5M seed; a listing reads "Toucan by Babbel"), ReadLingo ($3/mo), Memdora, Vocabulary Highlighter, Reverso, Readlang, LingQ (about $13/mo), Language Reactor, Yomitan (free, open source).
 - Google is commoditizing basic translation: Chrome built-in Translator API (Chrome 138+), Google Translate Gemini "Practice" mode (Aug 2025).
 - Extension economics: realistic free-to-paid conversion 0.5–2%, typical price $3–5/mo.
-- DeepL API: about $25–27.50 per 1M characters plus a base fee (check deepl.com/pro). The API has no explanation, example or dictionary endpoint, so Claude handles explanations.
+- DeepL API: about $25–27.50 per 1M characters plus a base fee (check deepl.com/pro). The API has no explanation, example or dictionary endpoint, so an LLM (Gemini) handles explanations.
 
 ## Appendix B: review mining (Firefox Add-ons, 1–3★, 2026-10-14)
 Reviews read for Immersive Translate (155), Reverso (70) and Yomitan (9). Reddit and the Chrome Web Store could not be reached by automated tools; to fill the gap, paste threads in manually.

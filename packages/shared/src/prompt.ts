@@ -47,7 +47,7 @@ Selection: "${text}"`;
 }
 
 /**
- * Parses Claude's raw output into an Explanation. Returns null if it is not valid JSON
+ * Parses the model's raw output into an Explanation. Returns null if it is not valid JSON
  * or does not match the schema, so the caller can retry.
  */
 export function parseExplanation(raw: string): Explanation | null {

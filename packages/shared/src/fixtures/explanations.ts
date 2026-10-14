@@ -1,4 +1,4 @@
-/** Raw Claude outputs, used to test the parser. Replaced with recorded responses below. */
+/** Raw model outputs, used to test the parser. Replaced with recorded responses below. */
 export const RECORDED_EXPLANATIONS: { name: string; raw: string }[] = [
   {
     name: 'placeholder',

@@ -40,7 +40,10 @@ export default function PrivacyPage() {
               <strong>DeepL</strong> translates the selected text.
             </li>
             <li>
-              <strong>Anthropic (Claude)</strong> writes the explanation of the selected text.
+              <strong>Google (Gemini)</strong> writes the explanation of the selected text. While we
+              use Gemini’s free tier, Google may use the selected text and its sentence to improve
+              its products, and Google’s reviewers may read them with identifying details removed.
+              Avoid selecting text that contains personal information.
             </li>
             <li>
               <strong>MongoDB Atlas</strong> stores your account and saved words.

@@ -8,7 +8,7 @@ A browser extension that translates selected text, explains it in context (nuanc
 ## Repo layout
 
 ```
-apps/web/         Next.js: landing page, auth, review app, API (DeepL + Claude)
+apps/web/         Next.js: landing page, auth, review app, API (DeepL + Gemini)
 apps/extension/   WXT + React browser extension (Chrome + Firefox)
 packages/shared/  zod schemas, types and text helpers shared by both apps
 ```
