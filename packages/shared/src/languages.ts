@@ -54,11 +54,15 @@ export function fromDeeplSource(code: string): LanguageCode | null {
  * Picks the direction for a selection: text in the language being learned is explained
  * in the native language, and text in the native language is translated into the
  * language being learned.
+ *
+ * `detected` is null when DeepL reports a language we don't support. That is almost
+ * always the language being learned mislabelled (DeepL calls short Spanish phrases like
+ * "me da igual" Portuguese), so it's treated as the learning language.
  */
 export function resolveDirection(
-  detected: LanguageCode,
+  detected: LanguageCode | null,
   settings: { native: LanguageCode; learning: LanguageCode },
 ): Direction {
   if (detected === settings.native) return { source: settings.native, target: settings.learning };
-  return { source: detected, target: settings.native };
+  return { source: settings.learning, target: settings.native };
 }

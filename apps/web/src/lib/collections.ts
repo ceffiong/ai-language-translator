@@ -1,6 +1,6 @@
 import 'server-only';
 import type { ObjectId } from 'mongodb';
-import type { CardContext, DirectionKey, Explanation } from '@ai-translator/shared';
+import type { CardContext, DirectionKey, Explanation, LanguageCode } from '@ai-translator/shared';
 import { db } from './db';
 
 export interface CardDoc {
@@ -63,7 +63,7 @@ export const collections = {
   usage: () => db().collection<UsageDoc>('usage'),
   explainCache: () => db().collection<CacheDoc<Explanation>>('explainCache'),
   translateCache: () =>
-    db().collection<CacheDoc<{ translation: string; detectedSourceLang: string | null }>>(
+    db().collection<CacheDoc<{ translation: string; detectedSourceLang: LanguageCode | null }>>(
       'translateCache',
     ),
   waitlist: () => db().collection<WaitlistDoc>('waitlist'),

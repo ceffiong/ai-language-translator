@@ -28,4 +28,13 @@ describe('languages', () => {
     expect(resolveDirection('en', spanishSpeaker)).toEqual({ source: 'en', target: 'es' });
     expect(resolveDirection('es', spanishSpeaker)).toEqual({ source: 'es', target: 'en' });
   });
+
+  it('treats an unsupported detected language as the language being learned', () => {
+    // DeepL detects short Spanish phrases such as "me da igual" as Portuguese.
+    const englishSpeaker = { native: 'en', learning: 'es' } as const;
+    expect(resolveDirection(fromDeeplSource('PT'), englishSpeaker)).toEqual({
+      source: 'es',
+      target: 'en',
+    });
+  });
 });

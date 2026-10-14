@@ -6,6 +6,7 @@ type ErrorCode = ApiError['error']['code'];
 const STATUS: Record<ErrorCode, number> = {
   bad_request: 400,
   unauthorized: 401,
+  forbidden: 403,
   quota_exceeded: 429,
   rate_limited: 429,
   upstream_error: 502,

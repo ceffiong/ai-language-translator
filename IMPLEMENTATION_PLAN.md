@@ -77,7 +77,7 @@ Tick each box (`- [x]`) when the task is done **and** its check passes. Don't st
 - [x] `app/api/auth/[...all]/route.ts` handler
 - [x] `lib/session.ts`: `requireUser(req)` reads a cookie **or** bearer session and returns `userId` or a 401
 - [x] Pages: `/sign-in` (Google button + email field), `/account` (email, sign out, delete account)
-- [ ] ✅ Signing in with Google and with a magic link both work locally; signing out works; `/account` redirects when signed out
+- [x] ✅ Signing in with Google and with a magic link both work locally; signing out works; `/account` redirects when signed out
 
 ### 1.4 Landing page and waitlist 🤖
 - [x] `/`: headline aimed at Spanish learners, a short demo GIF placeholder, "Add to Chrome" button (link placeholder), waitlist form
@@ -86,7 +86,7 @@ Tick each box (`- [x]`) when the task is done **and** its check passes. Don't st
 - [x] ✅ Submitting the waitlist form twice with the same email stores one record; an invalid email is rejected with a clear message
 
 ### ✅ Exit criteria
-- [ ] Sign up, sign in and sign out work end to end
+- [x] Sign up, sign in and sign out work end to end
 - [x] Waitlist entries reach Atlas
 - [x] `requireUser` has unit tests (cookie session, bearer session, missing or invalid)
 
@@ -96,49 +96,49 @@ Tick each box (`- [x]`) when the task is done **and** its check passes. Don't st
 **Goal:** fast, cached, rate-limited `/api/translate` and `/api/explain` endpoints.
 
 ### 2.1 Translate (DeepL) 🤖
-- [ ] `lib/deepl.ts`: calls `POST /v2/translate` with `text`, `target_lang`, optional `source_lang`, and `context` (the surrounding sentence)
-- [ ] Map our language codes to DeepL's (`EN-US`, `ES`)
-- [ ] `POST /api/translate`: request `{text, sentence, targetLang, sourceLang?}` → response `{translation, detectedSourceLang}`
-- [ ] Short timeout (about 5s), clear error responses (`429`, `502`), and never leaks the API key
-- [ ] Log character count per request (for the cost check)
-- [ ] ✅ Unit test with DeepL mocked; manual curl test against the real API (`es → en` and `en → es`)
+- [x] `lib/deepl.ts`: calls `POST /v2/translate` with `text`, `target_lang`, optional `source_lang`, and `context` (the surrounding sentence)
+- [x] Map our language codes to DeepL's (`EN-US`, `ES`)
+- [x] `POST /api/translate`: request `{text, sentence, targetLang, sourceLang?}` → response `{translation, detectedSourceLang}`
+- [x] Short timeout (about 5s), clear error responses (`429`, `502`), and never leaks the API key
+- [x] Log character count per request (for the cost check)
+- [x] ✅ Unit test with DeepL mocked; manual curl test against the real API (`es → en` and `en → es`). Found: DeepL labels short Spanish like "me da igual" as Portuguese, so `resolveDirection` treats an unsupported detected language as the learning language
 
 ### 2.2 Explain (Claude) 🤖
-- [ ] Before writing this, read the `claude-api` skill for current SDK usage, streaming and structured output
-- [ ] `packages/shared/src/prompt.ts`:
-  - [ ] System prompt: a language tutor that explains in the learner's **native** language, accurately and concisely, without making up etymology
-  - [ ] Input: selection, sentence, source and target languages, learner's native language
-  - [ ] Output JSON schema (`Explanation`): `meaningInContext`, `nuance` (why this word here, near-synonyms and how they differ), `register` (formal, neutral, informal, slang), `grammarNote?`, `examples[2]` `{source, translation}`, `ipa`, `partOfSpeech?`, `lemma?`
-- [ ] `lib/claude.ts`: Anthropic SDK client, model `claude-haiku-5-5`, low temperature, max tokens capped
-- [ ] `POST /api/explain`: streams the response to the client; validates the final JSON with zod; on failure retries once, then returns a friendly error
-- [ ] Log input and output tokens per request
+- [x] Before writing this, read the `claude-api` skill for current SDK usage, streaming and structured output (the skill wasn't available in this session, so I read the installed SDK's (`@anthropic-ai/sdk` 0.134) type definitions instead)
+- [x] `packages/shared/src/prompt.ts`:
+  - [x] System prompt: a language tutor that explains in the learner's **native** language, accurately and concisely, without making up etymology
+  - [x] Input: selection, sentence, source and target languages, learner's native language
+  - [x] Output JSON schema (`Explanation`): `meaningInContext`, `nuance` (why this word here, near-synonyms and how they differ), `register` (formal, neutral, informal, slang), `grammarNote?`, `examples[2]` `{source, translation}`, `ipa`, `partOfSpeech?`, `lemma?`
+- [x] `lib/claude.ts`: Anthropic SDK client, model `claude-haiku-5-5`, max tokens capped (1024), structured output via `output_config.format`, `effort: low`. Temperature can't be set on current models (the API rejects anything but 1.0)
+- [x] `POST /api/explain`: streams newline-delimited JSON events (`delta` / `reset` / `done` / `error`, see `ExplainStreamEventSchema`); validates the final JSON with zod; on failure retries once (not for 4xx errors like billing), then returns a friendly error and refunds the quota
+- [x] Log input and output tokens per request
 - [ ] ✅ Unit tests: prompt builder snapshots; parser accepts recorded good responses and rejects malformed ones
 - [ ] ✅ Manual check: 10 sample phrases (ser/estar, por/para, subjunctive, idioms like "echar de menos", and English phrasal verbs for the `en→es` direction); read the output for quality
 
 ### 2.3 Cache 🤖
-- [ ] `lib/cache.ts`: `hash = sha256(normalize(selection) | normalize(sentence) | source | target | promptVersion)`
-- [ ] `/api/explain` and `/api/translate` check the cache first and store the result after a successful call
-- [ ] Include `promptVersion` so that changing the prompt invalidates old entries
-- [ ] ✅ Test: the second identical request makes no API call (mock asserts it was called once)
+- [x] `lib/cache.ts`: `hash = sha256(normalize(selection) | normalize(sentence) | source | target | promptVersion)`
+- [x] `/api/explain` and `/api/translate` check the cache first and store the result after a successful call
+- [x] Include `promptVersion` so that changing the prompt invalidates old entries
+- [x] ✅ Test: the second identical request makes no API call (mock asserts it was called once)
 
 ### 2.4 Rate limiting and free-tier limits 🤖
-- [ ] `lib/rateLimit.ts`: atomic `findOneAndUpdate` with `$inc` on `usage` `{key, day}`; `expiresAt` set 2 days ahead
-- [ ] Anonymous users: key = `anon:<installId>` (a UUID sent in the `X-Install-Id` header), **30 explanations/day**
-- [ ] Signed-in free users: key = `user:<userId>`, the same 30/day (it lives in config and **must never be lowered after launch**)
-- [ ] Translation-only calls get a generous separate limit (e.g. 300/day) to stop abuse
-- [ ] Cache hits do **not** count toward the limit
-- [ ] A per-IP limit as a backstop against install-ID cycling
-- [ ] The response includes `X-Usage-Remaining`
-- [ ] ✅ Tests: the 31st call returns 429 with a friendly message; the counter resets the next UTC day; cache hits are free
+- [x] `lib/rateLimit.ts`: atomic `findOneAndUpdate` with `$inc` on `usage` `{key, day}`; `expiresAt` set 2 days ahead
+- [x] Anonymous users: key = `anon:<installId>` (a UUID sent in the `X-Install-Id` header), **30 explanations/day**
+- [x] Signed-in free users: key = `user:<userId>`, the same 30/day (it lives in config and **must never be lowered after launch**)
+- [x] Translation-only calls get a generous separate limit (e.g. 300/day) to stop abuse
+- [x] Cache hits do **not** count toward the limit
+- [x] A per-IP limit as a backstop against install-ID cycling (300 explanations, 3000 translations per IP per day; only a keyed hash of the IP is stored)
+- [x] The response includes `X-Usage-Remaining` (on `/api/explain`); `GET /api/usage` returns the remaining count for the extension popup
+- [x] ✅ Tests: the 31st call returns 429 with a friendly message; the counter resets the next UTC day; cache hits are free
 
 ### 2.5 CORS and extension access 🤖
-- [ ] API routes allow `chrome-extension://<id>` and `moz-extension://<id>` origins listed in `EXTENSION_IDS` (development IDs included)
-- [ ] Handle `OPTIONS` preflight requests
-- [ ] ✅ A request from an unknown origin is rejected
+- [x] API routes allow `chrome-extension://<id>` origins listed in `EXTENSION_IDS` and any `moz-extension://` origin (Firefox assigns a random ID per install, so it can't be listed)
+- [x] Handle `OPTIONS` preflight requests
+- [x] ✅ A request from an unknown origin is rejected
 
 ### ✅ Exit criteria
 - [ ] `es→en` and `en→es` both work through curl with real keys
-- [ ] Average latency recorded: translate < 1s, explanation's first token < 1.5s (note the actual numbers here: ______)
+- [ ] Average latency recorded: translate < 1s, explanation's first token < 1.5s (note the actual numbers here: translate 0.17–0.66s uncached, ~0.09s cached; explanation ______)
 - [ ] All Phase 2 tests pass
 
 ---
@@ -337,3 +337,6 @@ Tick each box (`- [x]`) when the task is done **and** its check passes. Don't st
 | 2026-10-14 | Hosting: Vercel (Hobby → Pro when charging) | Best fit with Next.js, costs easy to predict; hosting is a small share of total cost |
 | 2026-10-14 | DeepL for translation, Claude for explanations | The DeepL API has no explanation or example endpoint |
 | 2026-10-14 | MongoDB Atlas + Better Auth | User's preference for Mongo; self-hosted auth with bearer tokens for the extension |
+| 2026-10-14 | Working name "Contexto" kept for validation | Conflicts with a word game and with an existing "LingoMate" app; choose the final name before a public launch |
+| 2026-10-14 | `/api/explain` streams NDJSON events, not raw text | Lets the client show partial output, discard it on a retry (`reset`) and get a validated final object |
+| 2026-10-14 | Store only a keyed hash of IPs for the per-IP limit | Abuse protection without keeping personal data |

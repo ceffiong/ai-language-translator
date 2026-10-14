@@ -62,8 +62,8 @@ export default function PrivacyPage() {
             <li>Words you save, with their translation, explanation, sentence and page.</li>
             <li>Your review history, to schedule your reviews.</li>
             <li>
-              A random install ID and daily usage counts, to apply the free daily limit. These
-              expire after two days.
+              A random install ID, a one-way hash of your IP address (never the address itself) and
+              daily usage counts, to apply the free daily limit. These expire after two days.
             </li>
             <li>
               Translations and explanations are cached without any link to who asked for them, so

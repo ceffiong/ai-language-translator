@@ -7,6 +7,24 @@ export const LanguageCodeSchema = z.enum(LANGUAGE_CODES as [LanguageCode, ...Lan
 const selection = z.string().trim().min(1).max(MAX_SELECTION_LENGTH);
 const sentence = z.string().trim().max(MAX_SENTENCE_LENGTH);
 
+// --- Errors ----------------------------------------------------------------
+
+export const ApiErrorSchema = z.object({
+  error: z.object({
+    code: z.enum([
+      'bad_request',
+      'unauthorized',
+      'forbidden',
+      'quota_exceeded',
+      'rate_limited',
+      'upstream_error',
+      'internal',
+    ]),
+    message: z.string(),
+  }),
+});
+export type ApiError = z.infer<typeof ApiErrorSchema>;
+
 // --- Translate -------------------------------------------------------------
 
 export const TranslateRequestSchema = z.object({
@@ -26,13 +44,18 @@ export type TranslateResponse = z.infer<typeof TranslateResponseSchema>;
 
 // --- Explain ---------------------------------------------------------------
 
-export const ExplainRequestSchema = z.object({
-  text: selection,
-  sentence,
-  sourceLang: LanguageCodeSchema,
-  /** The learner's native language, which the explanation is written in. */
-  targetLang: LanguageCodeSchema,
-});
+export const ExplainRequestSchema = z
+  .object({
+    text: selection,
+    sentence,
+    sourceLang: LanguageCodeSchema,
+    /** The learner's native language, which the explanation is written in. */
+    targetLang: LanguageCodeSchema,
+  })
+  .refine((r) => r.sourceLang !== r.targetLang, {
+    message: 'sourceLang and targetLang must differ.',
+    path: ['targetLang'],
+  });
 export type ExplainRequest = z.infer<typeof ExplainRequestSchema>;
 
 export const RegisterSchema = z.enum(['formal', 'neutral', 'informal', 'slang', 'vulgar']);
@@ -54,6 +77,27 @@ export const ExplanationSchema = z.object({
   lemma: z.string().nullable(),
 });
 export type Explanation = z.infer<typeof ExplanationSchema>;
+
+/**
+ * `/api/explain` streams newline-delimited JSON, one event per line:
+ * `delta` events carry raw JSON text as Claude writes it (for progressive display),
+ * `reset` means a retry started and earlier deltas should be discarded,
+ * and the stream always ends with exactly one `done` or `error` event.
+ */
+export const ExplainStreamEventSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('delta'), text: z.string() }),
+  z.object({ type: z.literal('reset') }),
+  z.object({ type: z.literal('done'), explanation: ExplanationSchema, cached: z.boolean() }),
+  z.object({ type: z.literal('error'), error: ApiErrorSchema.shape.error }),
+]);
+export type ExplainStreamEvent = z.infer<typeof ExplainStreamEventSchema>;
+
+// --- Usage -----------------------------------------------------------------
+
+export const UsageResponseSchema = z.object({
+  explanations: z.object({ limit: z.number().int(), remaining: z.number().int() }),
+});
+export type UsageResponse = z.infer<typeof UsageResponseSchema>;
 
 // --- Cards & reviews -------------------------------------------------------
 
@@ -91,20 +135,3 @@ export const WaitlistRequestSchema = z.object({
   note: z.string().trim().max(1000).optional(),
 });
 export type WaitlistRequest = z.infer<typeof WaitlistRequestSchema>;
-
-// --- Errors ----------------------------------------------------------------
-
-export const ApiErrorSchema = z.object({
-  error: z.object({
-    code: z.enum([
-      'bad_request',
-      'unauthorized',
-      'quota_exceeded',
-      'rate_limited',
-      'upstream_error',
-      'internal',
-    ]),
-    message: z.string(),
-  }),
-});
-export type ApiError = z.infer<typeof ApiErrorSchema>;
