@@ -21,6 +21,13 @@ const RESPONSE_SCHEMA = (() => {
   return schema;
 })();
 
+const THINKING_LEVELS = {
+  minimal: ThinkingLevel.MINIMAL,
+  low: ThinkingLevel.LOW,
+  medium: ThinkingLevel.MEDIUM,
+  high: ThinkingLevel.HIGH,
+} as const;
+
 let client: GoogleGenAI | undefined;
 
 function gemini(): GoogleGenAI {
@@ -29,6 +36,16 @@ function gemini(): GoogleGenAI {
     httpOptions: { timeout: TIMEOUT_MS },
   });
   return client;
+}
+
+/** The model explanations come from. */
+export function explainModel(): string {
+  return env().GEMINI_MODEL;
+}
+
+/** Identifies the model and its settings, so cached answers aren't reused across them. */
+export function explainVariant(): string {
+  return `${env().GEMINI_MODEL}/${env().GEMINI_THINKING}`;
 }
 
 export interface ExplanationResult {
@@ -47,7 +64,7 @@ export async function generateExplanation(
   signal?: AbortSignal,
 ): Promise<ExplanationResult> {
   const { system, user } = buildExplainPrompt(req);
-  const model = env().GEMINI_MODEL;
+  const model = explainModel();
   const started = Date.now();
   let firstTokenMs: number | null = null;
 
@@ -59,8 +76,7 @@ export async function generateExplanation(
       maxOutputTokens: MAX_OUTPUT_TOKENS,
       responseMimeType: 'application/json',
       responseJsonSchema: RESPONSE_SCHEMA,
-      // A short lookup doesn't need reasoning; thinking only adds latency here.
-      thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
+      thinkingConfig: { thinkingLevel: THINKING_LEVELS[env().GEMINI_THINKING] },
       abortSignal: signal,
     },
   });
@@ -88,6 +104,7 @@ export async function generateExplanation(
     JSON.stringify({
       event: 'llm_explain',
       model,
+      thinking: env().GEMINI_THINKING,
       ...usage,
       finishReason,
       firstTokenMs,

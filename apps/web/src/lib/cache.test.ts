@@ -13,23 +13,29 @@ const base = {
 
 describe('cache keys', () => {
   it('ignores case, spacing and wrapping punctuation', () => {
-    expect(explainCacheKey({ ...base, text: ' «Echo  de menos» ' })).toBe(explainCacheKey(base));
-    expect(explainCacheKey({ ...base, sentence: 'echo de  menos a mi hermana.' })).toBe(
-      explainCacheKey(base),
+    expect(explainCacheKey({ ...base, text: ' «Echo  de menos» ' }, 'm')).toBe(
+      explainCacheKey(base, 'm'),
+    );
+    expect(explainCacheKey({ ...base, sentence: 'echo de  menos a mi hermana.' }, 'm')).toBe(
+      explainCacheKey(base, 'm'),
     );
   });
 
   it('differs by sentence and direction', () => {
-    expect(explainCacheKey({ ...base, sentence: 'Te echo de menos.' })).not.toBe(
-      explainCacheKey(base),
+    expect(explainCacheKey({ ...base, sentence: 'Te echo de menos.' }, 'm')).not.toBe(
+      explainCacheKey(base, 'm'),
     );
-    expect(explainCacheKey({ ...base, sourceLang: 'en', targetLang: 'es' })).not.toBe(
-      explainCacheKey(base),
+    expect(explainCacheKey({ ...base, sourceLang: 'en', targetLang: 'es' }, 'm')).not.toBe(
+      explainCacheKey(base, 'm'),
     );
   });
 
+  it('differs by model', () => {
+    expect(explainCacheKey(base, 'a')).not.toBe(explainCacheKey(base, 'b'));
+  });
+
   it('keeps translate and explain keys apart', () => {
-    expect(translateCacheKey({ ...base })).not.toBe(explainCacheKey(base));
+    expect(translateCacheKey({ ...base })).not.toBe(explainCacheKey(base, 'm'));
     expect(translateCacheKey({ text: 'hola', targetLang: 'en' })).not.toBe(
       translateCacheKey({ text: 'hola', targetLang: 'en', sourceLang: 'es' }),
     );

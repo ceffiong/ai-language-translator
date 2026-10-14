@@ -6,7 +6,7 @@ import { normalizeSelection } from './text';
  * Bump whenever the prompt or the Explanation schema changes. It is part of the cache
  * key, so a new version stops old cached explanations from being served.
  */
-export const PROMPT_VERSION = 'explain-v1';
+export const PROMPT_VERSION = 'explain-v2';
 
 export interface ExplainPrompt {
   system: string;
@@ -28,15 +28,16 @@ Fields:
 - meaningInContext: what the selection means in this exact sentence, in one or two short sentences. If it is an idiom or set phrase, say so and give its overall meaning rather than a word-by-word gloss.
 - nuance: why a speaker would choose this word or phrase here. Name one or two near-synonyms the learner might confuse it with and say briefly how they differ. Keep it under 60 words.
 - register: formal, neutral, informal, slang or vulgar, as used in this sentence.
-- grammarNote: one short note only when grammar is the key to understanding (for example ser vs estar, por vs para, the subjunctive, a phrasal verb, a reflexive or pronominal verb, a conjugated form); otherwise null.
-- examples: exactly 2 new, natural example sentences in ${source} that use the selection with the same meaning, each with a ${native} translation. Keep them short and everyday.
+- grammarNote: one short, practical note only when grammar is the key to understanding (for example ser vs estar, por vs para, why the subjunctive is used, an irregular form, the pronoun pattern of a verb like "gustar"); otherwise null. Explain what the learner needs to know rather than naming categories. Only use a technical label such as "separable", "intransitive" or "pronominal" if you are certain it is correct for this exact usage.
+- examples: exactly 2 new example sentences in ${source} that a native speaker would naturally say, using the selection with the same meaning, each with a natural ${native} translation. Keep them short and everyday.
 - ipa: the IPA transcription of the selection as a whole, in a standard accent, between slashes. Use null if the selection is longer than about six words.
 - partOfSpeech: in ${native}, e.g. "verb" or "noun phrase"; null for full sentences.
 - lemma: the dictionary form if the selection is an inflected single word or verb phrase (e.g. "echaba de menos" → "echar de menos"); otherwise null.
 
 Rules:
 - Be accurate above all. If the meaning is ambiguous, give the most likely reading in this sentence and say it is ambiguous.
-- Never invent etymology, statistics, regional claims or sources.
+- Never invent etymology, statistics or sources. Only mention regional or stylistic differences you are sure of.
+- Write entirely in ${native}, apart from the quoted ${source} words; never mix the two languages within a phrase.
 - If the selection is not actually ${source}, or is a name, number or typo, say so plainly in meaningInContext and keep the other fields minimal.
 - Be concise: the learner reads this in a small popup.`;
 

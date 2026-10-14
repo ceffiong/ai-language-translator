@@ -3,7 +3,7 @@ import { apiError, parseJson } from '@/lib/api';
 import { explainCacheKey, getCached, putCached } from '@/lib/cache';
 import { collections } from '@/lib/collections';
 import { preflight, withCors } from '@/lib/cors';
-import { errorStatus, generateExplanation, isRetryable } from '@/lib/gemini';
+import { errorStatus, explainVariant, generateExplanation, isRetryable } from '@/lib/gemini';
 import { consume, identifyClient, remaining } from '@/lib/rate-limit';
 
 export const OPTIONS = preflight;
@@ -24,7 +24,7 @@ export const POST = withCors(async (request) => {
   let hash: string;
   let quota;
   try {
-    hash = explainCacheKey(req);
+    hash = explainCacheKey(req, explainVariant());
     const cached = await getCached(collections.explainCache(), hash);
     if (cached) {
       const usage = await remaining(client, 'explain');

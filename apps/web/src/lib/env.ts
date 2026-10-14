@@ -14,6 +14,8 @@ const EnvSchema = z.object({
   GEMINI_API_KEY: z.string().min(1),
   /** Override to try another model without a code change. */
   GEMINI_MODEL: z.string().min(1).default('gemini-flash-lite-latest'),
+  /** How much the model reasons before answering: more is slower but more accurate. */
+  GEMINI_THINKING: z.enum(['minimal', 'low', 'medium', 'high']).default('low'),
   EXTENSION_IDS: z
     .string()
     .default('')

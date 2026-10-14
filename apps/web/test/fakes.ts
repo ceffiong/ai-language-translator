@@ -55,6 +55,7 @@ export function testEnv(overrides: Record<string, unknown> = {}) {
     DEEPL_API_URL: 'https://api-free.deepl.com',
     GEMINI_API_KEY: 'test-gemini-key',
     GEMINI_MODEL: 'gemini-test',
+    GEMINI_THINKING: 'minimal',
     EXTENSION_IDS: ['abcdefghijklmnopabcdefghijklmnop'],
     ANON_DAILY_LIMIT: 30,
     ...overrides,

@@ -113,8 +113,9 @@ Tick each box (`- [x]`) when the task is done **and** its check passes. Don't st
 - [x] `lib/gemini.ts`: `@google/genai` client, model from `GEMINI_MODEL` (default `gemini-flash-lite-latest`), max output tokens capped (1024), structured output via `responseJsonSchema` (generated from the zod schema), minimal thinking. Replaced `lib/claude.ts` (Claude Haiku) on 2026-10-14
 - [x] `POST /api/explain`: streams newline-delimited JSON events (`delta` / `reset` / `done` / `error`, see `ExplainStreamEventSchema`); validates the final JSON with zod; on failure retries once (not for 4xx errors such as a bad key or a 429; a 429 tells the user explanations are busy), then returns a friendly error and refunds the quota
 - [x] Log input and output tokens per request
-- [ ] ✅ Unit tests: prompt builder snapshots; parser accepts recorded good responses and rejects malformed ones
-- [ ] ✅ Manual check: 10 sample phrases (ser/estar, por/para, subjunctive, idioms like "echar de menos", and English phrasal verbs for the `en→es` direction); read the output for quality
+- [x] ✅ Unit tests: prompt builder snapshots; parser accepts recorded good responses and rejects malformed ones
+- [x] ✅ Manual check: 10 sample phrases (ser/estar, por/para, subjunctive, idioms like "echar de menos", and English phrasal verbs for the `en→es` direction); read the output for quality. Result (Flash-Lite): meanings, ser/estar, por/para, subjunctive and idioms are good; grammar notes were the weak spot (wrong "separable"/"pronominal" labels, an unnatural example). Prompt v2 fixed about half; `low` thinking fixed the remaining grammar notes in a partial run but produced one ungrammatical example ("Ella eche de menos")
+- [ ] Re-run the 11-phrase check with `low` thinking once Gemini quota allows, and decide the default
 
 ### 2.3 Cache 🤖
 - [x] `lib/cache.ts`: `hash = sha256(normalize(selection) | normalize(sentence) | source | target | promptVersion)`
@@ -138,8 +139,8 @@ Tick each box (`- [x]`) when the task is done **and** its check passes. Don't st
 - [x] ✅ A request from an unknown origin is rejected
 
 ### ✅ Exit criteria
-- [ ] `es→en` and `en→es` both work through curl with real keys
-- [ ] Average latency recorded: translate < 1s, explanation's first token < 1.5s (note the actual numbers here: translate 0.17–0.66s uncached, ~0.09s cached; explanation ______)
+- [x] `es→en` and `en→es` both work through curl with real keys
+- [x] Average latency recorded: translate < 1s, explanation's first token < 1.5s (note the actual numbers here: translate 0.17–0.66s uncached, ~0.09s cached; explanation first token 0.7–1.2s (avg ~1.0s), complete 1.4–2.4s on Flash-Lite)
 - [ ] All Phase 2 tests pass
 
 ---
@@ -342,3 +343,4 @@ Tick each box (`- [x]`) when the task is done **and** its check passes. Don't st
 | 2026-10-14 | `/api/explain` streams NDJSON events, not raw text | Lets the client show partial output, discard it on a retry (`reset`) and get a validated final object |
 | 2026-10-14 | Store only a keyed hash of IPs for the per-IP limit | Abuse protection without keeping personal data |
 | 2026-10-14 | Gemini (free tier) instead of Claude for explanations | Free during validation. Trade-off: on the free tier Google may use prompts to improve its products and reviewers may read them; disclosed on /privacy. Turning on Cloud Billing makes all use paid, which stops that |
+| 2026-10-14 | Gemini free tier isn't enough on its own | The fresh no-billing project served about 17 Flash-Lite calls, then returned 429 and 402 "prepayment credits depleted"; full Flash isn't free at all. Prepaid credit needed for development and testers |

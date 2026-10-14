@@ -21,9 +21,11 @@ function sha256(parts: string[]): string {
   return createHash('sha256').update(parts.join('\u001f')).digest('hex');
 }
 
-export function explainCacheKey(req: ExplainRequest): string {
+/** `variant` (model and settings) is part of the key so a switch doesn't serve old answers. */
+export function explainCacheKey(req: ExplainRequest, variant: string): string {
   return sha256([
     PROMPT_VERSION,
+    variant,
     normalizeKey(req.text),
     normalizeSentence(req.sentence),
     req.sourceLang,
