@@ -54,41 +54,41 @@ Tick each box (`- [x]`) when the task is done **and** its check passes. Don't st
 **Goal:** users can sign up and sign in, and a public landing page collects waitlist emails.
 
 ### 1.1 Next.js app 🤖
-- [ ] `apps/web`: Next.js (App Router, TypeScript, Tailwind CSS)
-- [ ] Base layout, typography, light and dark themes, works on a phone
-- [ ] `lib/env.ts`: validates environment variables with zod at startup (fails fast on missing keys)
+- [x] `apps/web`: Next.js (App Router, TypeScript, Tailwind CSS)
+- [x] Base layout, typography, light and dark themes, works on a phone
+- [x] `lib/env.ts`: validates environment variables with zod at startup (fails fast on missing keys)
 
 ### 1.2 MongoDB 🤖
-- [ ] `lib/db.ts`: a single shared `MongoClient` (reused across hot reloads and serverless calls)
-- [ ] `lib/collections.ts`: typed accessors for `cards`, `reviewLogs`, `usage`, `explainCache`, `waitlist`
-- [ ] `scripts/ensure-indexes.ts`:
-  - [ ] `cards`: `{userId:1, due:1}`, `{userId:1, createdAt:-1}`, unique `{userId:1, textNorm:1, direction:1}`
-  - [ ] `reviewLogs`: `{userId:1, reviewedAt:-1}`
-  - [ ] `usage`: unique `{key:1, day:1}` plus a TTL index on `expiresAt`
-  - [ ] `explainCache`: unique `{hash:1}`
-  - [ ] `waitlist`: unique `{email:1}`
-- [ ] ✅ Run the script against Atlas and confirm the indexes in the Atlas UI
+- [x] `lib/db.ts`: a single shared `MongoClient` (reused across hot reloads and serverless calls)
+- [x] `lib/collections.ts`: typed accessors for `cards`, `reviewLogs`, `usage`, `explainCache`, `waitlist`
+- [x] `scripts/ensure-indexes.ts`:
+  - [x] `cards`: `{userId:1, due:1}`, `{userId:1, createdAt:-1}`, unique `{userId:1, textNorm:1, direction:1}`
+  - [x] `reviewLogs`: `{userId:1, reviewedAt:-1}`
+  - [x] `usage`: unique `{key:1, day:1}` plus a TTL index on `expiresAt`
+  - [x] `explainCache`: unique `{hash:1}`
+  - [x] `waitlist`: unique `{email:1}`
+- [x] ✅ Run the script against Atlas and confirm the indexes (`pnpm --filter web db:indexes`: 9 indexes)
 
 ### 1.3 Authentication (Better Auth) 🤖
-- [ ] Install `better-auth`; `lib/auth.ts` with the MongoDB adapter
-- [ ] Google OAuth provider
-- [ ] Magic-link plugin sending through Resend
-- [ ] Bearer plugin (lets the extension authenticate with `Authorization: Bearer <token>`)
-- [ ] `app/api/auth/[...all]/route.ts` handler
-- [ ] `lib/session.ts`: `requireUser(req)` reads a cookie **or** bearer session and returns `userId` or a 401
-- [ ] Pages: `/sign-in` (Google button + email field), `/account` (email, sign out, delete account)
+- [x] Install `better-auth`; `lib/auth.ts` with the MongoDB adapter
+- [x] Google OAuth provider
+- [x] Magic-link plugin sending through Resend
+- [x] Bearer plugin (lets the extension authenticate with `Authorization: Bearer <token>`)
+- [x] `app/api/auth/[...all]/route.ts` handler
+- [x] `lib/session.ts`: `requireUser(req)` reads a cookie **or** bearer session and returns `userId` or a 401
+- [x] Pages: `/sign-in` (Google button + email field), `/account` (email, sign out, delete account)
 - [ ] ✅ Signing in with Google and with a magic link both work locally; signing out works; `/account` redirects when signed out
 
 ### 1.4 Landing page and waitlist 🤖
-- [ ] `/`: headline aimed at Spanish learners, a short demo GIF placeholder, "Add to Chrome" button (link placeholder), waitlist form
-- [ ] `POST /api/waitlist`: zod-validated, deduplicated, stores `{email, source, createdAt}`
-- [ ] `/privacy`: a plain-language privacy policy ("only the text you select and its sentence leave your browser"; what's stored; how to delete it)
-- [ ] ✅ Submitting the waitlist form twice with the same email stores one record; an invalid email is rejected with a clear message
+- [x] `/`: headline aimed at Spanish learners, a short demo GIF placeholder, "Add to Chrome" button (link placeholder), waitlist form
+- [x] `POST /api/waitlist`: zod-validated, deduplicated, stores `{email, source, createdAt}`
+- [x] `/privacy`: a plain-language privacy policy ("only the text you select and its sentence leave your browser"; what's stored; how to delete it)
+- [x] ✅ Submitting the waitlist form twice with the same email stores one record; an invalid email is rejected with a clear message
 
 ### ✅ Exit criteria
 - [ ] Sign up, sign in and sign out work end to end
-- [ ] Waitlist entries reach Atlas
-- [ ] `requireUser` has unit tests (cookie session, bearer session, missing or invalid)
+- [x] Waitlist entries reach Atlas
+- [x] `requireUser` has unit tests (cookie session, bearer session, missing or invalid)
 
 ---
 
