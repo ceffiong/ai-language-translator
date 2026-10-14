@@ -1,0 +1,9 @@
+node_modules
+dist
+.next
+.output
+.wxt
+.turbo
+coverage
+pnpm-lock.yaml
+*.md
